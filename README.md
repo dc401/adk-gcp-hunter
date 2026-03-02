@@ -1,5 +1,5 @@
 # adk-gcp-hunter
-Multi-agentic threat hunting in GCP cloud logging with guard rails from finished threat intelligence PDF, Docx, and Txt files. Designed to accelerate hunting analysts automate and scale hunt sprints. This features self-healing refinement workflows within agent tools and the workflow itself with context awareness and automatic compacting between turns.
+Multi-agentic threat hunting in GCP cloud logging with guard rails from finished threat intelligence PDF, Docx, and Txt files. Designed to accelerate hunting analysts automate and scale hunt sprints.
 
 Core code developed by Dennis Chow and then enhanced by GenAI for significantly better graceful handling of edge cases and errors. Want to check it out live? Sign up for [Google NeXT '26 CUSTLT-116](https://www.googlecloudevents.com/next-vegas/session/3908778/build-an-ai-threat-hunter-agentic-workflows-with-google-adk)
 ![Google NeXT CUSTLT-116 Build an AI threat hunter in Google ADK by Dennis Chow](https://github.com/dc401/adk-gcp-hunter/blob/main/GoogleNeXT-2026-CUSTLT-116-placecard.PNG?raw=true)
@@ -35,22 +35,9 @@ There is no expressed warranty. GenAI does have failures, even with safeguards h
  - `python3` should be installed to the latest stable version but this was tested on 3.11.x at the time of development on Windows and MacOS
  - Note: If you do not have the above, recommend trying this out in a GCP project sandbox not connected to an org, within cloudshell using your owner permissions.
 
- ## Getting Started
- - Download or clone a copy this repo. Extract. 
- - Run `gcloud auth login` to ensure you have an oauth token and your project id is set.
- - Navigate to gcp-threat-sim-tf and run:
-	 - `terraform init`
-	 - `terraform plan`
-	 - `terraform apply`
-	 - Wait 15-20 minutes for the deployment to settle
- - Navigate to the adk-gcphunter-1.5
-	 - `python3 -m venv .`
-	 - `source ./bin/activate` 
-	 - `adk web`
-	 - Select gcp_hunter from the drop down
-	 - Type "start hunt" and watch it perform
-	 - Wait 10-15 minutes for the hunt to typically complete
- - Review the logs in the hunt_results folder
-
  ## Google ADK General Flow
  ![Google ADK GCP Hunter Logical Flow](https://github.com/dc401/adk-gcp-hunter/blob/main/adk-highlevel-workflow.png?raw=true)
+
+ ## Demo Video
+ Click Play below for a 2 minute (4x speed demo. Total duration time ~10 minutes excluding terraform deploy and destroy)
+[![Time Lapse Video of ADK GCP Hunter 1.5 Demo ](https://img.youtube.com/vi/Egh1JBJytm4/maxresdefault.jpg)](https://www.youtube.com/watch?v=Egh1JBJytm4))
