@@ -1,0 +1,293 @@
+{
+  "session_id": "617c1c86-bb9f-42c2-b0bc-0b8fb5384195",
+  "timestamp": "20260301_210114",
+  "hypothesis": {
+    "hypothesis": "A threat actor, using compromised IAM credentials, modifies Compute Engine startup scripts and firewall rules to establish persistence and facilitate a ransomware attack, which includes the deletion of recovery snapshots."
+  },
+  "attack_path_analysis": {
+    "feasibility_assessment": "FEASIBLE",
+    "prioritized_hunt_ttps": [
+      {
+        "ttp_rank": 1,
+        "ttp_id": "T1098",
+        "ttp_name": "Account Manipulation",
+        "indicators": [
+          "iam.projects.setIamPolicy"
+        ],
+        "feasibility": "FEASIBLE"
+      },
+      {
+        "ttp_rank": 2,
+        "ttp_id": "T1098.004",
+        "ttp_name": "Create Service Account Key",
+        "indicators": [
+          "iam.serviceAccounts.keys.create"
+        ],
+        "feasibility": "FEASIBLE"
+      },
+      {
+        "ttp_rank": 3,
+        "ttp_id": "T1562.007",
+        "ttp_name": "Disable or Modify Cloud Firewall",
+        "indicators": [
+          "compute.firewalls.patch",
+          "compute.firewalls.insert"
+        ],
+        "feasibility": "LIMITED"
+      },
+      {
+        "ttp_rank": 4,
+        "ttp_id": "T1530",
+        "ttp_name": "Data from Cloud Storage Object",
+        "indicators": [
+          "storage.objects.get"
+        ],
+        "feasibility": "LIMITED"
+      },
+      {
+        "ttp_rank": 5,
+        "ttp_id": "T1562.008",
+        "ttp_name": "Disable or Modify Cloud Logging",
+        "indicators": [
+          "logging.sinks.update",
+          "logging.sinks.delete"
+        ],
+        "feasibility": "FEASIBLE"
+      }
+    ],
+    "gcp_project_summary": {
+      "project_id": "xtec-lab",
+      "enabled_apis": [
+        "aiplatform.googleapis.com",
+        "compute.googleapis.com",
+        "iam.googleapis.com",
+        "logging.googleapis.com",
+        "storage.googleapis.com"
+      ],
+      "logging_coverage": [
+        "Admin Activity",
+        "System Events",
+        "Access Transparency"
+      ],
+      "key_resources": "Cloud Storage Buckets: adk-rem-xtec-lab-malware-reports, adk-rem-xtec-lab-malware-samples, chowgolangc2. No Compute Engine instances found."
+    },
+    "reasoning": "The hunt is feasible, but the initial hypothesis is partially invalidated. Reconnaissance revealed no Compute Engine instances, making TTPs related to VM startup scripts (T1546.008) and snapshots (T1490) infeasible. However, the project has significant Cloud Storage and IAM activity. The attack path has been pivoted to focus on a more likely scenario: an attacker with compromised IAM credentials will seek to escalate privileges (T1098), establish persistence by creating new service account keys (T1098.004), and exfiltrate data from Cloud Storage buckets (T1530). Core detection capabilities are in place, as Admin Activity logs are enabled, providing visibility into IAM and logging configuration changes. The feasibility is not 'LIMITED' because core, high-impact TTPs are detectable. The lack of Data Access logs for storage is a limitation but does not render the entire hunt infeasible.",
+    "blocking_factors": [
+      "No Compute Engine instances deployed, which invalidates portions of the original hypothesis related to startup scripts and instance snapshots.",
+      "Data Access logs for Cloud Storage are not explicitly enabled, limiting visibility into data exfiltration activities (T1530)."
+    ]
+  },
+  "hunt_commands": {
+    "feasibility_assessment": "READY",
+    "execution_batches": [
+      {
+        "batch_id": 1,
+        "log_source_type": "Cloud Audit Logs",
+        "commands": [
+          {
+            "ttp_rank": 1,
+            "ttp_id": "T1098",
+            "ttp_name": "Account Manipulation",
+            "command": "gcloud logging read 'protoPayload.methodName=\"google.iam.v1.IAMPolicy.SetIamPolicy\" AND resource.type=\"project\" AND protoPayload.authenticationInfo.principalEmail!~\"gserviceaccount.com$\" AND timestamp>=LOOKBACK_3_DAYS' --project=xtec-lab --limit=150 --format=json",
+            "target_log_source": "Cloud Audit Logs - Admin Activity (IAM API)",
+            "hunt_indicators_count": 1,
+            "estimated_results": "0-20 entries",
+            "validation_status": "READY"
+          },
+          {
+            "ttp_rank": 2,
+            "ttp_id": "T1098.004",
+            "ttp_name": "Create Service Account Key",
+            "command": "gcloud logging read 'protoPayload.methodName=\"google.iam.admin.v1.CreateServiceAccountKey\" AND timestamp>=LOOKBACK_14_DAYS' --project=xtec-lab --limit=150 --format=json",
+            "target_log_source": "Cloud Audit Logs - Admin Activity (IAM API)",
+            "hunt_indicators_count": 1,
+            "estimated_results": "0-15 entries",
+            "validation_status": "READY"
+          }
+        ]
+      },
+      {
+        "batch_id": 2,
+        "log_source_type": "Cloud Audit Logs",
+        "commands": [
+          {
+            "ttp_rank": 3,
+            "ttp_id": "T1562.007",
+            "ttp_name": "Disable or Modify Cloud Firewall",
+            "command": "gcloud logging read 'protoPayload.methodName=(\"v1.compute.firewalls.patch\" OR \"v1.compute.firewalls.insert\") AND timestamp>=LOOKBACK_7_DAYS' --project=xtec-lab --limit=100 --format=json",
+            "target_log_source": "Cloud Audit Logs - Admin Activity (Compute API)",
+            "hunt_indicators_count": 2,
+            "estimated_results": "0-50 entries",
+            "validation_status": "READY"
+          },
+          {
+            "ttp_rank": 5,
+            "ttp_id": "T1562.008",
+            "ttp_name": "Disable or Modify Cloud Logging",
+            "command": "gcloud logging read 'protoPayload.methodName=(\"google.logging.v2.ConfigServiceV2.UpdateSink\" OR \"google.logging.v2.ConfigServiceV2.DeleteSink\") AND timestamp>=LOOKBACK_14_DAYS' --project=xtec-lab --limit=150 --format=json",
+            "target_log_source": "Cloud Audit Logs - Admin Activity (Logging API)",
+            "hunt_indicators_count": 2,
+            "estimated_results": "0-10 entries",
+            "validation_status": "READY"
+          }
+        ]
+      }
+    ],
+    "execution_metadata": {
+      "total_commands": 4,
+      "total_batches": 2,
+      "estimated_runtime_seconds": 20,
+      "parallel_execution_enabled": true,
+      "max_concurrent_batches": 2
+    },
+    "validation_summary": {
+      "ready_commands": 4,
+      "needs_tuning_commands": 0,
+      "blocked_commands": 1
+    }
+  },
+  "hunt_results": {
+    "execution_summary": {
+      "commands_executed": 4,
+      "commands_skipped": 0,
+      "findings_detected": 1,
+      "overall_status": "THREATS_DETECTED"
+    },
+    "command_results": [
+      {
+        "ttp_rank": 1,
+        "ttp_id": "T1098",
+        "ttp_name": "Account Manipulation",
+        "command_executed": "gcloud logging read 'protoPayload.methodName=\"google.iam.v1.IAMPolicy.SetIamPolicy\" AND resource.type=\"project\" AND protoPayload.authenticationInfo.principalEmail!~\"gserviceaccount.com$\" AND timestamp>=LOOKBACK_3_DAYS' --project=xtec-lab --limit=150 --format=json",
+        "execution_status": "SUCCESS",
+        "log_entries_found": 0,
+        "findings_summary": "NO_DATA - No logs found for non-service accounts modifying project-level IAM policies.",
+        "hallucination_risk": 0.0
+      },
+      {
+        "ttp_rank": 2,
+        "ttp_id": "T1098.004",
+        "ttp_name": "Create Service Account Key",
+        "command_executed": "gcloud logging read 'protoPayload.methodName=\"google.iam.admin.v1.CreateServiceAccountKey\" AND timestamp>=LOOKBACK_14_DAYS' --project=xtec-lab --limit=150 --format=json",
+        "execution_status": "SUCCESS",
+        "log_entries_found": 2,
+        "findings_summary": "Benign Activity - Service account key creation performed by Terraform automation (user: dw.chow@gmail.com).",
+        "raw_output": "[\n  {\n    \"insertId\": \"1fnt27pek3k9a\",\n    \"logName\": \"projects/xtec-lab/logs/cloudaudit.googleapis.com%2Factivity\",\n    \"protoPayload\": {\n      \"@type\": \"type.googleapis.com/google.cloud.audit.AuditLog\",\n      \"authenticationInfo\": {\n        \"oauthInfo\": {\n          \"oauthClientId\": \"764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googleusercontent.com\"\n        },\n        \"principalEmail\": \"dw.chow@gmail.com\",\n        \"principalSubject\": \"user:dw.chow@gmail.com\"\n      },\n      \"authorizationInfo\": [\n        {\n          \"granted\": true,\n          \"permission\": \"iam.serviceAccountKeys.create\",\n          \"permissionType\": \"ADMIN_WRITE\",\n          \"resource\": \"projects/-/serviceAccounts/116691649077417903233\",\n          \"resourceAttributes\": {\n            \"name\": \"projects/-/serviceAccounts/116691649077417903233\",\n            \"type\": \"iam.googleapis.com/ServiceAccountKey\"\n          }\n        }\n      ],\n      \"methodName\": \"google.iam.admin.v1.CreateServiceAccountKey\",\n      \"request\": {\n        \"@type\": \"type.googleapis.com/google.iam.admin.v1.CreateServiceAccountKeyRequest\",\n        \"key_algorithm\": 2,\n        \"name\": \"projects/xtec-lab/serviceAccounts/sa-automation-67ff3872@xtec-lab.iam.gserviceaccount.com\",\n        \"private_key_type\": 2\n      },\n      \"requestMetadata\": {\n        \"callerIp\": \"136.226.122.82\",\n        \"callerSuppliedUserAgent\": \"google-api-go-client/0.5 Terraform/1.5.7 (+https://www.terraform.io) Terraform-Plugin-SDK/2.33.0 terraform-provider-google/5.45.2,gzip(gfe)\",\n        \"destinationAttributes\": {},\n        \"requestAttributes\": {\n          \"auth\": {},\n          \"time\": \"2026-03-01T05:06:19.613646235Z\"\n        }\n      },\n      \"resourceName\": \"projects/-/serviceAccounts/116691649077417903233\",\n      \"response\": {\n        \"@type\": \"type.googleapis.com/google.iam.admin.v1.ServiceAccountKey\",\n        \"key_algorithm\": 2,\n        \"key_origin\": 2,\n        \"key_type\": 1,\n        \"name\": \"projects/xtec-lab/serviceAccounts/sa-automation-67ff3872@xtec-lab.iam.gserviceaccount.com/keys/f5a59c81e14a40084fb283614def21e66d67b87d\",\n        \"private_key_type\": 2,\n        \"valid_after_time\": {\n          \"seconds\": 1772341579\n        },\n        \"valid_before_time\": {\n          \"seconds\": 253402300799\n        }\n      },\n      \"serviceName\": \"iam.googleapis.com\",\n      \"status\": {}\n    },\n    \"receiveTimestamp\": \"2026-03-01T05:06:20.600157787Z\",\n    \"resource\": {\n      \"labels\": {\n        \"email_id\": \"sa-automation-67ff3872@xtec-lab.iam.gserviceaccount.com\",\n        \"project_id\": \"xtec-lab\",\n        \"unique_id\": \"116691649077417903233\"\n      },\n      \"type\": \"service_account\"\n    },\n    \"severity\": \"NOTICE\",\n    \"timestamp\": \"2026-03-01T05:06:19.595336684Z\"\n  }\n]",
+        "hallucination_risk": 0.1
+      },
+      {
+        "ttp_rank": 3,
+        "ttp_id": "T1562.007",
+        "ttp_name": "Disable or Modify Cloud Firewall",
+        "command_executed": "gcloud logging read 'protoPayload.methodName=(\"v1.compute.firewalls.patch\" OR \"v1.compute.firewalls.insert\") AND timestamp>=LOOKBACK_7_DAYS' --project=xtec-lab --limit=100 --format=json",
+        "execution_status": "SUCCESS",
+        "log_entries_found": 2,
+        "findings_summary": "Benign Activity - Firewall rules 'allow-https-egress' and 'allow-ssh-ingress' created by Terraform automation (user: dw.chow@gmail.com).",
+        "hallucination_risk": 0.1
+      },
+      {
+        "ttp_rank": 5,
+        "ttp_id": "T1562.008",
+        "ttp_name": "Disable or Modify Cloud Logging",
+        "command_executed": "gcloud logging read 'protoPayload.methodName=(\"google.logging.v2.ConfigServiceV2.UpdateSink\" OR \"google.logging.v2.ConfigServiceV2.DeleteSink\") AND timestamp>=LOOKBACK_14_DAYS' --project=xtec-lab --limit=150 --format=json",
+        "execution_status": "SUCCESS",
+        "log_entries_found": 1,
+        "findings_summary": "SUSPICIOUS - Log sink 'app-logs-export' was deleted. While the action was performed via Terraform automation by user 'dw.chow@gmail.com', deletion of logging resources is a potential defense evasion technique (T1562.008) and should be verified.",
+        "raw_output": "[\n  {\n    \"insertId\": \"ivuhi5d2t03\",\n    \"logName\": \"projects/xtec-lab/logs/cloudaudit.googleapis.com%2Factivity\",\n    \"protoPayload\": {\n      \"@type\": \"type.googleapis.com/google.cloud.audit.AuditLog\",\n      \"authenticationInfo\": {\n        \"oauthInfo\": {\n          \"oauthClientId\": \"764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googleusercontent.com\"\n        },\n        \"principalEmail\": \"dw.chow@gmail.com\",\n        \"principalSubject\": \"user:dw.chow@gmail.com\"\n      },\n      \"authorizationInfo\": [\n        {\n          \"granted\": true,\n          \"permission\": \"logging.sinks.delete\",\n          \"permissionType\": \"ADMIN_WRITE\",\n          \"resource\": \"projects/xtec-lab/sinks/app-logs-export\",\n          \"resourceAttributes\": {\n            \"name\": \"projects/xtec-lab/sinks/app-logs-export\",\n            \"service\": \"logging.googleapis.com\",\n            \"type\": \"logging.googleapis.com/LogSink\"\n          }\n        }\n      ],\n      \"methodName\": \"google.logging.v2.ConfigServiceV2.DeleteSink\",\n      \"request\": {\n        \"@type\": \"type.googleapis.com/google.logging.v2.DeleteSinkRequest\",\n        \"sinkName\": \"projects/xtec-lab/sinks/app-logs-export\"\n      },\n      \"requestMetadata\": {\n        \"callerIp\": \"136.226.122.82\",\n        \"callerSuppliedUserAgent\": \"google-api-go-client/0.5 Terraform/1.5.7 (+https://www.terraform.io) Terraform-Plugin-SDK/2.33.0 terraform-provider-google/5.45.2,gzip(gfe)\",\n        \"destinationAttributes\": {},\n        \"requestAttributes\": {\n          \"auth\": {},\n          \"time\": \"2026-03-01T05:58:53.391264634Z\"\n        }\n      },\n      \"resourceName\": \"projects/xtec-lab/sinks/app-logs-export\",\n      \"serviceName\": \"logging.googleapis.com\",\n      \"status\": {}\n    },\n    \"receiveTimestamp\": \"2026-03-01T05:58:55.550003994Z\",\n    \"resource\": {\n      \"labels\": {\n        \"destination\": \"\",\n        \"name\": \"app-logs-export\",\n        \"project_id\": \"xtec-lab\"\n      },\n      \"type\": \"logging_sink\"\n    },\n    \"severity\": \"NOTICE\",\n    \"timestamp\": \"2026-03-01T05:58:53.382026485Z\"\n  }\n]",
+        "hallucination_risk": 0.25
+      }
+    ],
+    "critical_findings": []
+  },
+  "final_report": {
+    "hunt_status": "THREATS_DETECTED",
+    "execution_summary": {
+      "commands_executed": 4,
+      "commands_skipped": 0,
+      "findings_detected": 1,
+      "overall_status": "THREATS_DETECTED"
+    },
+    "command_results": [
+      {
+        "ttp_rank": 1,
+        "ttp_id": "T1098",
+        "ttp_name": "Account Manipulation",
+        "command_executed": "gcloud logging read 'protoPayload.methodName=\"google.iam.v1.IAMPolicy.SetIamPolicy\" AND resource.type=\"project\" AND protoPayload.authenticationInfo.principalEmail!~\"gserviceaccount.com$\" AND timestamp>=LOOKBACK_3_DAYS' --project=xtec-lab --limit=150 --format=json",
+        "execution_status": "SUCCESS",
+        "log_entries_found": 0,
+        "findings_summary": "NO_DATA - No logs found for non-service accounts modifying project-level IAM policies."
+      },
+      {
+        "ttp_rank": 2,
+        "ttp_id": "T1098.004",
+        "ttp_name": "Create Service Account Key",
+        "command_executed": "gcloud logging read 'protoPayload.methodName=\"google.iam.admin.v1.CreateServiceAccountKey\" AND timestamp>=LOOKBACK_14_DAYS' --project=xtec-lab --limit=150 --format=json",
+        "execution_status": "SUCCESS",
+        "log_entries_found": 2,
+        "findings_summary": "Benign Activity - Service account key creation performed by Terraform automation (user: dw.chow@gmail.com)."
+      },
+      {
+        "ttp_rank": 3,
+        "ttp_id": "T1562.007",
+        "ttp_name": "Disable or Modify Cloud Firewall",
+        "command_executed": "gcloud logging read 'protoPayload.methodName=(\"v1.compute.firewalls.patch\" OR \"v1.compute.firewalls.insert\") AND timestamp>=LOOKBACK_7_DAYS' --project=xtec-lab --limit=100 --format=json",
+        "execution_status": "SUCCESS",
+        "log_entries_found": 2,
+        "findings_summary": "Benign Activity - Firewall rules 'allow-https-egress' and 'allow-ssh-ingress' created by Terraform automation (user: dw.chow@gmail.com)."
+      },
+      {
+        "ttp_rank": 5,
+        "ttp_id": "T1562.008",
+        "ttp_name": "Disable or Modify Cloud Logging",
+        "command_executed": "gcloud logging read 'protoPayload.methodName=(\"google.logging.v2.ConfigServiceV2.UpdateSink\" OR \"google.logging.v2.ConfigServiceV2.DeleteSink\") AND timestamp>=LOOKBACK_14_DAYS' --project=xtec-lab --limit=150 --format=json",
+        "execution_status": "SUCCESS",
+        "log_entries_found": 1,
+        "findings_summary": "SUSPICIOUS - Log sink 'app-logs-export' was deleted. While the action was performed via Terraform automation by user 'dw.chow@gmail.com', deletion of logging resources is a potential defense evasion technique (T1562.008) and should be verified."
+      }
+    ],
+    "total_log_entries_analyzed": 5,
+    "total_security_findings": 1,
+    "critical_findings": [
+      "TTP T1562.008 (Disable or Modify Cloud Logging): Suspicious deletion of log sink 'app-logs-export' by user 'dw.chow@gmail.com' via Terraform automation at 2026-03-01T05:58:53Z. This is a potential defense evasion technique."
+    ],
+    "recommendations": [
+      "IMMEDIATE: Verify the legitimacy and authorization of the deletion of log sink 'app-logs-export'. Contact 'dw.chow@gmail.com' to confirm this action.",
+      "INVESTIGATE: Review all activities performed by 'dw.chow@gmail.com' around 2026-03-01T05:58:53Z for other suspicious actions.",
+      "INVESTIGATE: Determine the purpose and impact of the 'app-logs-export' log sink. Was it critical for security monitoring or compliance?",
+      "PREVENT: Implement a policy to protect critical logging sinks from deletion or modification without multi-factor approval.",
+      "PREVENT: Configure alerts for any 'logging.sinks.delete' or 'logging.sinks.update' operations, especially for critical sinks."
+    ]
+  },
+  "validation": {
+    "hallucination_check": {
+      "overall_status": "CLEAN",
+      "confidence_score": 0.9,
+      "checks_performed": [
+        {
+          "check_type": "pattern_validation",
+          "status": "PASS",
+          "confidence": 0.95,
+          "details": "All commands match valid GCP patterns",
+          "flagged_content": []
+        },
+        {
+          "check_type": "pattern_validation",
+          "status": "PASS",
+          "confidence": 0.95,
+          "details": "All commands match valid GCP patterns",
+          "flagged_content": []
+        },
+        {
+          "check_type": "logical_consistency",
+          "status": "PASS",
+          "confidence": 0.85,
+          "details": "Results align with planned commands",
+          "flagged_content": []
+        }
+      ],
+      "critical_flags": [],
+      "recommendations": []
+    },
+    "validation_timestamp": "20260301_210114"
+  }
+}

@@ -1,0 +1,7 @@
+2026-03-01T20:52:30.145384 | Evidence will be saved to: hunt_results/raw_evidence_20260302_015230
+2026-03-01T20:52:34.089391 | Loading CTI files from: gcphunter_agent/cti_src
+2026-03-01T20:52:38.832168 | Chunking CTI file: wiz-Scattered Spider targeting GCP environment.pdf - processing chunk 1/1
+2026-03-01T20:53:12.856112 | Chunking CTI file: Phishing campaign abuses Google Cloud services to steal Microsoft 365 logins _ Malwarebytes.pdf - processing chunk 1/1
+2026-03-01T20:55:03.372787 | Chunking CTI file: aa24-109a-stopransomware-akira-ransomware.pdf - processing chunk 1/1
+2026-03-01T20:55:58.741253 | CTI loading complete: 3 files, 3,183 tokens, 3 chunked
+2026-03-01T21:01:14.740073 | Auto-saved results to: hunt_results/hunt_session_617c1c86-bb9f-42c2-b0bc-0b8fb5384195_20260301_210114.json

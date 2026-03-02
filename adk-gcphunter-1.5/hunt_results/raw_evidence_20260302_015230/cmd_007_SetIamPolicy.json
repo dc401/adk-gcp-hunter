@@ -1,0 +1,7 @@
+{
+  "command": "gcloud logging read 'protoPayload.methodName=\"google.iam.v1.IAMPolicy.SetIamPolicy\" AND resource.type=\"project\" AND protoPayload.authenticationInfo.principalEmail!~\"gserviceaccount.com$\" AND timestamp>=\"2026-02-27T01:52:30Z\"' --project=xtec-lab --limit=150 --format=json",
+  "timestamp": "2026-03-02T01:59:22.955295Z",
+  "output": "[]\n",
+  "size_bytes": 3,
+  "execution_order": 7
+}
