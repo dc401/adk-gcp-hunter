@@ -38,6 +38,5 @@ There is no expressed warranty. GenAI does have failures, even with safeguards h
  ## Google ADK General Flow
  ![Google ADK GCP Hunter Logical Flow](https://github.com/dc401/adk-gcp-hunter/blob/main/adk-highlevel-workflow.png?raw=true)
 
- ## Demo Video
- Click Play below for a 2 minute (4x speed demo. Total duration time ~10 minutes excluding terraform deploy and destroy)
-[![Time Lapse Video of ADK GCP Hunter 1.5 Demo ](https://img.youtube.com/vi/Egh1JBJytm4/maxresdefault.jpg)](https://www.youtube.com/watch?v=Egh1JBJytm4))
+ ## Results Screenshot (ADK Web)
+ ![enter image description here](https://github.com/dc401/adk-gcp-hunter/blob/main/adk-web-results-screenshot.PNG?raw=true)
