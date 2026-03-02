@@ -1,7 +1,8 @@
 # adk-gcp-hunter
 Multi-agentic threat hunting in GCP cloud logging with guard rails from finished threat intelligence PDF, Docx, and Txt files. Designed to accelerate hunting analysts automate and scale hunt sprints.
 
- Core code developed by Dennis Chow and then enhanced by GenAI for signficantly better graceful handling of edge cases and errors
+Core code developed by Dennis Chow and then enhanced by GenAI for significantly better graceful handling of edge cases and errors. Want to check it out live? Sign up for [Google NeXT '26 CUSTLT-116](https://www.googlecloudevents.com/next-vegas/session/3908778/build-an-ai-threat-hunter-agentic-workflows-with-google-adk)
+![Google NeXT CUSTLT-116 Build an AI threat hunter in Google ADK by Dennis Chow](https://github.com/dc401/adk-gcp-hunter/blob/main/GoogleNeXT-2026-CUSTLT-116-placecard.PNG?raw=true)
 
 ## Notable Features
 
@@ -33,3 +34,6 @@ There is no expressed warranty. GenAI does have failures, even with safeguards h
  - `terraform` if you wish to deploy the sample TTP activity modules from gcp-threat-sim-tf that align to the most of the TTPs from the cti_src folder. 
  - `python3` should be installed to the latest stable version but this was tested on 3.11.x at the time of development on Windows and MacOS
  - Note: If you do not have the above, recommend trying this out in a GCP project sandbox not connected to an org, within cloudshell using your owner permissions.
+
+ ## Google ADK General Flow
+ ![Google ADK GCP Hunter Logical Flow](https://github.com/dc401/adk-gcp-hunter/blob/main/adk-highlevel-workflow.png?raw=true)
